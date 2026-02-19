@@ -1,6 +1,7 @@
+use crate::domain::entities::{ImageInput, SegmentationResult};
 use anyhow::Result;
 
 #[async_trait::async_trait]
-pub trait Segmenter: Send + Sync {
-    async fn segment(&self, image_btytes: &[u8]) -> Result<Vec<u8>>;
+pub trait Inferer: Send + Sync {
+    async fn segment(&self, image_btytes: ImageInput) -> Result<SegmentationResult>;
 }

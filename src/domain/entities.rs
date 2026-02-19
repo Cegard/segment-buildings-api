@@ -1,5 +1,14 @@
-pub struct SegmentationResult {
-    pub mask: Vec<u8>,
+pub struct Dimensions {
+    pub width: usize,
+    pub height: usize,
 }
 
-pub struct SegmentationInput(pub &[u8]);
+pub struct SegmentationResult {
+    pub mask: Vec<u8>,
+    pub dimensions: Dimensions,
+}
+
+pub struct ImageInput {
+    pub image_bytes: Vec<u8>,
+    pub dimensions: Dimensions,
+}

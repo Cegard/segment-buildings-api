@@ -1,2 +1,2 @@
 pub mod definitions;
-pub mod use_cases;
+pub mod segment_image;
