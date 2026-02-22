@@ -7,10 +7,7 @@ use axum::{
 };
 use std::sync::Arc;
 
-use crate::{
-    application::definitions::Inferer,
-    domain::entities::{ImageInput, SegmentationResult},
-};
+use crate::{application::definitions::Inferer, domain::entities::ImageInput};
 
 async fn extract_image(multipart: &mut Multipart) -> Result<ImageInput> {
     while let Some(field) = multipart.next_field().await? {
@@ -30,7 +27,18 @@ async fn extract_image(multipart: &mut Multipart) -> Result<ImageInput> {
     anyhow::bail!("Image field not found in multipart data");
 }
 
-// pub async fn segment_handler(
-//     State(Inferer): State<Arc<dyn Inferer>>,
-//     Multipart(mut multipart): Multipart,
-//
+pub async fn segment_handler(
+    State(inferer): State<Arc<dyn Inferer>>,
+    mut multipart: Multipart,
+) -> impl IntoResponse {
+    match extract_image(&mut multipart).await {
+        Ok(image_input) => match inferer.segment(image_input).await {
+            Ok(result) => (StatusCode::OK, Json(result)).into_response(),
+            Err(e) => {
+                eprintln!("Segmentation error: {:?}", e);
+                StatusCode::INTERNAL_SERVER_ERROR.into_response()
+            }
+        },
+        Err(_) => StatusCode::BAD_REQUEST.into_response(),
+    }
+}
