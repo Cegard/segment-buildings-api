@@ -1,7 +1,7 @@
 use crate::domain::entities::{Dimensions, SegmentationResult};
 use anyhow::Result;
 use image::ImageReader;
-use ndarray::{Array4, ArrayD, ArrayView, IxDyn};
+use ndarray::{Array4, ArrayView, IxDyn};
 
 pub(super) fn preprocess(image_bytes: Vec<u8>) -> Result<Array4<f32>> {
     let img = ImageReader::new(std::io::Cursor::new(image_bytes))
