@@ -1,10 +1,10 @@
 use crate::application::definitions::Inferer;
+use crate::constants::ENV_MODEL_PATH;
 use anyhow::Result;
 use ndarray::{Array4, Ix4};
 use ort::{ep::CPU, ep::CUDA, inputs, session::Session, value::Tensor};
+use std::env;
 use tokio::sync::{Mutex, Semaphore};
-
-const MODEL_PATH: &str = "../model/model.onnx";
 
 pub struct OrtSegmenter {
     pub session: Mutex<Session>,
@@ -14,6 +14,7 @@ pub struct OrtSegmenter {
 impl OrtSegmenter {
     pub fn new(will_run_on_cuda: bool, max_concurrent_calls: Option<usize>) -> Result<Self> {
         let mut providers = vec![CPU::default().build()];
+        let model_path = env::var(ENV_MODEL_PATH)?;
 
         if will_run_on_cuda {
             providers.insert(0, CUDA::default().build());
@@ -21,7 +22,7 @@ impl OrtSegmenter {
 
         let session = Session::builder()?
             .with_execution_providers(providers)?
-            .commit_from_file(MODEL_PATH)?;
+            .commit_from_file(model_path)?;
 
         Ok(Self {
             session: Mutex::new(session),
@@ -38,8 +39,8 @@ impl Inferer for OrtSegmenter {
         let mut session = self.session.lock().await;
 
         let tensor = Tensor::from_array(input)?;
-        let outputs = session.run(inputs!["input" => tensor])?;
-        let output = outputs["output"].try_extract_array::<f32>()?;
+        let outputs = session.run(inputs![super::constants::SESSION_INPUT_NAME => tensor])?;
+        let output = outputs[super::constants::SESSION_OUTPUT_NAME].try_extract_array::<f32>()?;
 
         let owned = output.into_dimensionality::<Ix4>()?.to_owned();
 

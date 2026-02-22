@@ -1,17 +1,16 @@
-use crate::{
-    application::segment_image::SegmentImage as SegmentUseCase, domain::entities::ImageInput,
-};
+use crate::{application::segment_image::SegmentImage, constants, domain::entities::ImageInput};
 use axum::{
     Json,
     extract::{Multipart, State},
     http::StatusCode,
     response::IntoResponse,
 };
+use std::env;
 use std::sync::Arc;
 
 #[derive(Clone)]
 pub struct AppState {
-    pub use_case: Arc<SegmentUseCase>,
+    pub use_case: Arc<SegmentImage>,
 }
 
 pub async fn segment_handler(
@@ -19,9 +18,11 @@ pub async fn segment_handler(
     mut multipart: Multipart,
 ) -> impl IntoResponse {
     let mut image_bytes = None;
+    let image_field = env::var(constants::ENV_IMAGE_FILE_NAME)
+        .expect("IMAGE_FILE_NAME environment variable not set");
 
     while let Some(field) = multipart.next_field().await.unwrap() {
-        if field.name() == Some("image") {
+        if field.name() == Some(&image_field) {
             image_bytes = Some(field.bytes().await.unwrap().to_vec());
         }
     }
