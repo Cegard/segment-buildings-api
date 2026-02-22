@@ -1,16 +1,14 @@
-use super::tool_kit::*;
 use crate::application::definitions::Inferer;
-use crate::domain::entities::{ImageInput, SegmentationResult};
 use anyhow::Result;
+use ndarray::{Array4, Ix4};
 use ort::{ep::CPU, ep::CUDA, inputs, session::Session, value::Tensor};
-use std::sync::Arc;
 use tokio::sync::{Mutex, Semaphore};
 
 const MODEL_PATH: &str = "../model/model.onnx";
 
 pub struct OrtSegmenter {
-    pub session: Arc<Mutex<Session>>,
-    pub semaphore: Arc<Semaphore>,
+    pub session: Mutex<Session>,
+    pub semaphore: Semaphore,
 }
 
 impl OrtSegmenter {
@@ -26,27 +24,25 @@ impl OrtSegmenter {
             .commit_from_file(MODEL_PATH)?;
 
         Ok(Self {
-            session: Arc::new(Mutex::new(session)),
-            semaphore: Arc::new(Semaphore::new(max_concurrent_calls.unwrap_or(1))),
+            session: Mutex::new(session),
+            semaphore: Semaphore::new(max_concurrent_calls.unwrap_or(1)),
         })
     }
 }
 
 #[async_trait::async_trait]
 impl Inferer for OrtSegmenter {
-    async fn segment(&self, image_input: ImageInput) -> Result<SegmentationResult> {
+    async fn infer(&self, input: Array4<f32>) -> Result<Array4<f32>> {
         let _permit = self.semaphore.acquire().await?;
-        let input_data: Vec<usize> = vec![
-            image_input.dimensions.height,
-            image_input.dimensions.width,
-            3,
-        ];
-        let mut session = self.session.lock().await;
-        let input = Tensor::from_array((input_data, image_input.image_bytes))?;
-        let outputs = session.run(inputs!["image" => input])?;
-        let output_tensor = outputs["output0"].try_extract_array::<f32>()?;
-        let result = postprocess(output_tensor)?;
 
-        Ok(result)
+        let mut session = self.session.lock().await;
+
+        let tensor = Tensor::from_array(input)?;
+        let outputs = session.run(inputs!["input" => tensor])?;
+        let output = outputs["output"].try_extract_array::<f32>()?;
+
+        let owned = output.into_dimensionality::<Ix4>()?.to_owned();
+
+        Ok(owned)
     }
 }

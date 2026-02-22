@@ -14,5 +14,4 @@ pub struct SegmentationResult {
 
 pub struct ImageInput {
     pub image_bytes: Vec<u8>,
-    pub dimensions: Dimensions,
 }

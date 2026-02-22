@@ -1,17 +1,21 @@
 use super::definitions::Inferer;
 use crate::domain::entities::{ImageInput, SegmentationResult};
 use anyhow::Result;
+use std::sync::Arc;
 
-pub struct SegmentImage<I: Inferer> {
-    inferer: I,
+pub struct SegmentImage {
+    inferer: Arc<dyn Inferer>,
 }
 
-impl<I: Inferer> SegmentImage<I> {
-    pub fn new(segmenter: I) -> Self {
-        Self { inferer: segmenter }
+impl SegmentImage {
+    pub fn new(inferer: Arc<dyn Inferer>) -> Self {
+        Self { inferer }
     }
 
-    pub async fn execute(&self, image_btytes: ImageInput) -> Result<SegmentationResult> {
-        self.inferer.segment(image_btytes).await
+    pub async fn execute(&self, image_input: ImageInput) -> Result<SegmentationResult> {
+        let input_tensor = super::tool_kit::preprocess(image_input.image_bytes)?;
+        let raw_output = self.inferer.infer(input_tensor).await?;
+        let segmentation_result = super::tool_kit::postprocess(raw_output)?;
+        Ok(segmentation_result)
     }
 }
