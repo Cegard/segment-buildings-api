@@ -357,6 +357,48 @@ openapi-generator-cli generate -i openapi.yaml -g go
 
 ## 🐳 Deployment
 
+### Podman - Development (with Hot Reloading)
+
+The `Containerfile.dev` image includes hot reloading capabilities for development:
+
+```bash
+podman run --rm -it \
+  --env-file .env \
+  --device nvidia.com/gpu=all \
+  -p 3000:3000 \
+  -v "$PWD:/app" \
+  -v cargo-cache:/root/.cargo \
+  -v target-cache:/app/target \
+  buildings_digitizer:dev
+```
+
+**Features:**
+- Hot reloading for code changes
+- GPU support via NVIDIA
+- Port 3000 mapped to container
+- Cached Cargo and build artifacts for faster rebuilds
+- Environment variables loaded from `.env` file
+
+### Podman - Production (CUDA)
+
+Build and run the production image optimized with CUDA:
+
+```bash
+# Build the production image
+podman build -t buildings_digitizer:cuda .
+
+# Run the production image
+podman run --rm -it \
+  --device nvidia.com/gpu=all \
+  -p 3000:3000 \
+  buildings_digitizer:cuda
+```
+
+**Features:**
+- Optimized production build
+- CUDA-enabled for GPU acceleration
+- Port 3000 exposed for API access
+
 ### Docker
 
 ```bash
