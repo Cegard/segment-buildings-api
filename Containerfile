@@ -52,15 +52,6 @@ COPY --from=builder /app/target/release/buildings_digitizer /usr/local/bin/app
 # Copy model files
 COPY model ./model
 
-# ENV IMAGE_FILE_NAME=image
-# ENV RUST_LOG=info
-# ENV MODEL_PATH=./model/model.onnx
-# ENV ON_ADDRESS=0.0.0.0
-# ENV PORT=3000
-# ENV ON_CUDA=true
-# ENV MAX_CON_CALLS=2
-# ENV IMAGE_FILE_NAME=image
-# CUDA runtime libraries
 ENV RUST_LOG=info
 ENV LD_LIBRARY_PATH=/usr/local/cuda/lib64:${LD_LIBRARY_PATH}
 
