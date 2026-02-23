@@ -1,7 +1,6 @@
 use axum::{
-    Router,
+    Json, Router,
     routing::{get, post},
-    Json,
 };
 use dotenvy::dotenv;
 use std::env;
@@ -16,7 +15,7 @@ mod constants;
 mod domain;
 mod infrastructure;
 
-use api::handlers::{AppState, segment_handler, health_handler};
+use api::handlers::{AppState, health_handler, segment_handler};
 use application::segment_image::SegmentImage;
 use infrastructure::segmentation::inferenece_engine::OrtSegmenter;
 
@@ -123,25 +122,27 @@ async fn main() -> anyhow::Result<()> {
     let port = env::var(constants::ENV_PORT)?.parse::<usize>()?;
     let will_run_on_cuda = env::var(constants::ENV_ON_CUDA)?.parse::<bool>()?;
     let max_con_calls = env::var(constants::ENV_MAX_CON_CALLS)?.parse::<usize>()?;
-    
+
     let inferer = Arc::new(OrtSegmenter::new(will_run_on_cuda, Some(max_con_calls))?);
     let use_case = Arc::new(SegmentImage::new(inferer));
     let state = AppState { use_case };
-    
+
     // Create router with segmentation and health endpoints
     let app = Router::new()
         .route("/segment", post(segment_handler))
         .route("/health", get(health_handler))
         .route("/api/openapi.json", get(openapi_spec))
         .with_state(state);
-    
+
     let listener = TcpListener::bind(format!("{address}:{port}")).await?;
     println!("Server running on http://{}", listener.local_addr()?);
-    println!("API OpenAPI spec available at http://{}/api/openapi.json", listener.local_addr()?);
+    println!(
+        "API OpenAPI spec available at http://{}/api/openapi.json",
+        listener.local_addr()?
+    );
     println!("Press Ctrl+C to stop the server");
 
-    let server = axum::serve(listener, app)
-        .with_graceful_shutdown(shutdown_signal());
+    let server = axum::serve(listener, app).with_graceful_shutdown(shutdown_signal());
 
     server.await?;
 
@@ -149,7 +150,7 @@ async fn main() -> anyhow::Result<()> {
 }
 
 async fn shutdown_signal() {
-    let _ = signal::ctrl_c()
+    signal::ctrl_c()
         .await
         .expect("Failed to install CTRL+C signal handler");
     println!("\nShutting down server...");

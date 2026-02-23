@@ -16,15 +16,15 @@ RUN apt-get update && \
   ninja-build && \
   rm -rf /var/lib/apt/lists/*
 
-# Install Rust
+# Install Rust as root
 RUN curl https://sh.rustup.rs -sSf | sh -s -- -y
+
 ENV PATH="/root/.cargo/bin:${PATH}"
 
-# Install cargo-watch
-RUN cargo install cargo-watch
+RUN /root/.cargo/bin/cargo install cargo-watch
 
 ENV LD_LIBRARY_PATH=/usr/local/cuda/lib64:${LD_LIBRARY_PATH}
 
 EXPOSE 3000
 
-CMD ["cargo", "watch", "-x", "run --features cuda"]
+CMD ["/root/.cargo/bin/cargo", "watch", "-x", "run --features cuda"]
