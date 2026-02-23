@@ -344,10 +344,9 @@ identify segmentation.png
 - **Minimum:** 1x1 pixels
 - **Maximum:** Limited by available memory
 
-### Processing Time
+### Processing
 - Depends on image size and model complexity
 - CUDA acceleration recommended for large batches
-- Single inference typically completes in milliseconds
 
 ### Concurrent Requests
 - Limited by `MAX_CON_CALLS` environment variable

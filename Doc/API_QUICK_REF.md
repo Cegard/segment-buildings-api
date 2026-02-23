@@ -203,7 +203,7 @@ curl http://localhost:8080/api/openapi.json | jq '.'
 | Missing image field | Ensure form field name is "image" |
 | Invalid image format | Use supported format: PNG, JPG, BMP, etc |
 | Memory error | Reduce image size or increase system RAM |
-| Slow response | Enable CUDA, increase MAX_CON_CALLS |
+| Poor response | Enable CUDA, increase MAX_CON_CALLS |
 
 ---
 
@@ -250,6 +250,6 @@ spec:
 ## For More Information
 
 - Full API Documentation: [API_DOCUMENTATION.md](API_DOCUMENTATION.md)
-- OpenAPI Specification: [openapi.yaml](openapi.yaml)
+- OpenAPI Specification: [openapi.yaml](../openapi.yaml)
 - Testing Guide: [TESTING.md](TESTING.md)
 - Test Summary: [TEST_SUMMARY.md](TEST_SUMMARY.md)

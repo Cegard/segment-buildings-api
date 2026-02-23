@@ -21,7 +21,7 @@ info:
     - Real-time image segmentation with AI models
     - PNG output format for easy integration
     - Concurrent request handling with semaphore control
-    - CUDA acceleration support for faster processing
+    - CUDA acceleration support
     - Health check endpoint for monitoring
     - Full OpenAPI/Swagger documentation
     
@@ -95,17 +95,10 @@ paths:
            - Converts to [0, 255] grayscale values
         5. **Encode**: Outputs as PNG image
         
-        ### Processing Time
-        - Typical: 10-100ms per image (depending on size)
-        - With CUDA: 5-50ms per image
-        - Preprocessing: ~5ms
-        - Inference: ~50-90ms
-        - Postprocessing + encoding: ~5-10ms
-        
         ### Image Size Recommendations
-        - **Small**: 256x256 - fastest, least detailed
+        - **Small**: 256x256 - least detailed
         - **Medium**: 512x512 - balanced
-        - **Large**: 1024x1024+ - most detailed, slower
+        - **Large**: 1024x1024+ - most detailed
         - **Maximum**: Limited by available RAM (typically 4096x4096)
         
         ### Output Format
@@ -214,12 +207,6 @@ paths:
                 type: string
                 example: "attachment; filename=\"segmentation.png\""
               description: File download information for browsers
-            X-Processing-Time:
-              schema:
-                type: integer
-                format: int64
-              description: "Processing time in milliseconds (optional)"
-              example: 45
           
           content:
             image/png:

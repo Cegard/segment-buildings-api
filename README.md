@@ -10,18 +10,18 @@ This is a REST API for segmentation buildings from satelital images using ONNX R
 
 | File | Size | Purpose | Audience |
 |------|------|---------|----------|
-| [API_DOCUMENTATION.md](API_DOCUMENTATION.md) | 11KB | Comprehensive API guide with examples, integration guides, and troubleshooting | API Consumers, Developers |
-| [API_QUICK_REF.md](API_QUICK_REF.md) | 5KB | Quick lookup reference for common tasks and examples | Developers, DevOps |
-| [openapi.yaml](openapi.yaml) | 7KB | OpenAPI 3.0 specification in YAML format | Tools, IDEs, Integration |
-| [OPENAPI_SUMMARY.md](OPENAPI_SUMMARY.md) | 10KB | Overview of OpenAPI integration and usage | Architects, Tech Leads |
+| [Doc/API_DOCUMENTATION.md](Doc/API_DOCUMENTATION.md) | 11KB | Comprehensive API guide with examples, integration guides, and troubleshooting | API Consumers, Developers |
+| [Doc/API_QUICK_REF.md](Doc/API_QUICK_REF.md) | 5KB | Quick lookup reference for common tasks and examples | Developers, DevOps |
+| [Doc/openapi.yaml](Doc/openapi.yaml) | 7KB | OpenAPI 3.0 specification in YAML format | Tools, IDEs, Integration |
+| [Doc/OPENAPI_SUMMARY.md](Doc/OPENAPI_SUMMARY.md) | 10KB | Overview of OpenAPI integration and usage | Architects, Tech Leads |
 
 ### Test Documentation
 
 | File | Size | Purpose | Audience |
 |------|------|---------|----------|
-| [TESTING.md](TESTING.md) | 6KB | Detailed testing guide with all test descriptions | QA, Developers |
-| [TEST_QUICK_REF.md](TEST_QUICK_REF.md) | 3KB | Quick reference for running tests | CI/CD, Developers |
-| [TEST_SUMMARY.md](TEST_SUMMARY.md) | 7KB | Complete test statistics and coverage analysis | Managers, QA |
+| [Doc/TESTING.md](Doc/TESTING.md) | 6KB | Detailed testing guide with all test descriptions | QA, Developers |
+| [Doc/TEST_QUICK_REF.md](Doc/TEST_QUICK_REF.md) | 3KB | Quick reference for running tests | CI/CD, Developers |
+| [Doc/TEST_SUMMARY.md](Doc/TEST_SUMMARY.md) | 7KB | Complete test statistics and coverage analysis | Managers, QA |
 
 ### Project Files
 
@@ -36,27 +36,27 @@ This is a REST API for segmentation buildings from satelital images using ONNX R
 
 ### For API Consumers
 
-1. **Start here:** [API_QUICK_REF.md](API_QUICK_REF.md)
-2. **Detailed info:** [API_DOCUMENTATION.md](API_DOCUMENTATION.md)
+1. **Start here:** [Doc/API_QUICK_REF.md](Doc/API_QUICK_REF.md)
+2. **Detailed info:** [Doc/API_DOCUMENTATION.md](Doc/API_DOCUMENTATION.md)
 3. **Examples:** See Python/JavaScript sections in both guides
 
 ### For Developers
 
 1. **Run tests:** `cargo test`
-2. **Read:** [TESTING.md](TESTING.md)
-3. **Reference:** [TEST_QUICK_REF.md](TEST_QUICK_REF.md)
+2. **Read:** [Doc/TESTING.md](Doc/TESTING.md)
+3. **Reference:** [Doc/TEST_QUICK_REF.md](Doc/TEST_QUICK_REF.md)
 
 ### For DevOps/Integrations
 
-1. **Import spec:** [openapi.yaml](openapi.yaml) or use `/api/openapi.json` endpoint
-2. **Configuration:** See [API_DOCUMENTATION.md](API_DOCUMENTATION.md) - Configuration section
-3. **Deployment:** See integration guides in [API_DOCUMENTATION.md](API_DOCUMENTATION.md)
+1. **Import spec:** [Doc/openapi.yaml](Doc/openapi.yaml) or use `/api/openapi.json` endpoint
+2. **Configuration:** See [Doc/API_DOCUMENTATION.md](Doc/API_DOCUMENTATION.md) - Configuration section
+3. **Deployment:** See integration guides in [Doc/API_DOCUMENTATION.md](Doc/API_DOCUMENTATION.md)
 
 ---
 
 ## 📋 Content Summary
 
-### API_DOCUMENTATION.md (Complete Reference)
+### Doc/API_DOCUMENTATION.md (Complete Reference)
 
 **Sections:**
 - Overview and base URLs
@@ -73,7 +73,7 @@ This is a REST API for segmentation buildings from satelital images using ONNX R
 - API versioning
 - Support contact
 
-### API_QUICK_REF.md (Quick Lookup)
+### Doc/API_QUICK_REF.md (Quick Lookup)
 
 **Sections:**
 - Endpoints summary table
@@ -89,7 +89,7 @@ This is a REST API for segmentation buildings from satelital images using ONNX R
 - Performance tips
 - Links to detailed docs
 
-### openapi.yaml (Machine-Readable Spec)
+### Doc/openapi.yaml (Machine-Readable Spec)
 
 **Contents:**
 - OpenAPI 3.0.0 metadata
@@ -101,7 +101,7 @@ This is a REST API for segmentation buildings from satelital images using ONNX R
 - Component schemas
 - Tags and organization
 
-### OPENAPI_SUMMARY.md (Integration Guide)
+### Doc/OPENAPI_SUMMARY.md (Integration Guide)
 
 **Sections:**
 - Overview of OpenAPI integration
@@ -115,7 +115,7 @@ This is a REST API for segmentation buildings from satelital images using ONNX R
 - Next steps for enhancement
 - Verification status
 
-### TESTING.md (Test Suite Guide)
+### Doc/TESTING.md (Test Suite Guide)
 
 **Sections:**
 - Test structure overview
@@ -132,7 +132,7 @@ This is a REST API for segmentation buildings from satelital images using ONNX R
 - Adding new tests
 - Troubleshooting
 
-### TEST_QUICK_REF.md (Test Commands)
+### Doc/TEST_QUICK_REF.md (Test Commands)
 
 **Sections:**
 - Running tests (all variations)
@@ -144,7 +144,7 @@ This is a REST API for segmentation buildings from satelital images using ONNX R
 - CI/CD integration
 - Test results summary
 
-### TEST_SUMMARY.md (Test Report)
+### Doc/TEST_SUMMARY.md (Test Report)
 
 **Sections:**
 - Test statistics (44 total tests)
@@ -383,25 +383,7 @@ spec:
 
 ---
 
-## 📈 Performance
-
-### Recommended Settings
-
-- Image size: 256-2048 pixels
-- Enable CUDA for GPU acceleration
-- Increase MAX_CON_CALLS for concurrency
-- Use connection pooling in clients
-
-### Benchmarks
-
-- Single inference: ~10-100ms (depends on image size)
-- Preprocessing: ~5ms
-- Postprocessing: ~2ms
-- PNG encoding: ~5ms
-
----
-
-## 🐛 Troubleshooting
+##  Troubleshooting
 
 ### Server Won't Start
 
@@ -442,29 +424,29 @@ ls -la $MODEL_PATH
 ### If you're a...
 
 **API Consumer:**
-1. Start with [API_QUICK_REF.md](API_QUICK_REF.md)
-2. Deep dive into [API_DOCUMENTATION.md](API_DOCUMENTATION.md)
+1. Start with [Doc/API_QUICK_REF.md](Doc/API_QUICK_REF.md)
+2. Deep dive into [Doc/API_DOCUMENTATION.md](Doc/API_DOCUMENTATION.md)
 3. Use examples to build your client
 
 **Developer:**
-1. Review [TESTING.md](TESTING.md)
+1. Review [Doc/TESTING.md](Doc/TESTING.md)
 2. Run `cargo test` to verify setup
-3. Check [TEST_QUICK_REF.md](TEST_QUICK_REF.md) for commands
+3. Check [Doc/TEST_QUICK_REF.md](Doc/TEST_QUICK_REF.md) for commands
 
 **DevOps Engineer:**
-1. See [API_DOCUMENTATION.md](API_DOCUMENTATION.md) - Configuration section
-2. Import [openapi.yaml](openapi.yaml) into tools
+1. See [Doc/API_DOCUMENTATION.md](Doc/API_DOCUMENTATION.md) - Configuration section
+2. Import [Doc/openapi.yaml](Doc/openapi.yaml) into tools
 3. Follow integration examples
 4. Set up monitoring
 
 **Architect/Tech Lead:**
-1. Read [OPENAPI_SUMMARY.md](OPENAPI_SUMMARY.md)
-2. Review [TEST_SUMMARY.md](TEST_SUMMARY.md)
-3. Check API structure in [API_DOCUMENTATION.md](API_DOCUMENTATION.md)
+1. Read [Doc/OPENAPI_SUMMARY.md](Doc/OPENAPI_SUMMARY.md)
+2. Review [Doc/TEST_SUMMARY.md](Doc/TEST_SUMMARY.md)
+3. Check API structure in [Doc/API_DOCUMENTATION.md](Doc/API_DOCUMENTATION.md)
 
 **CI/CD Engineer:**
-1. See [TEST_QUICK_REF.md](TEST_QUICK_REF.md) - CI/CD section
-2. Use [TESTING.md](TESTING.md) for test commands
+1. See [Doc/TEST_QUICK_REF.md](Doc/TEST_QUICK_REF.md) - CI/CD section
+2. Use [Doc/TESTING.md](Doc/TESTING.md) for test commands
 3. Integrate test suite into pipeline
 
 ---

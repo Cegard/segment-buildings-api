@@ -127,12 +127,6 @@ cargo test --test fixtures
 cargo test -- --nocapture --test-threads=1
 ```
 
-## Test Execution Time
-- **Unit Tests**: ~0.00s (very fast)
-- **Integration Tests**: ~0.04s (fast)
-- **Fixture Tests**: ~0.00s (very fast)
-- **Total**: ~0.05s
-
 ## Mock Infrastructure
 
 ### MockInferer
