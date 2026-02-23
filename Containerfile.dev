@@ -1,0 +1,30 @@
+FROM docker.io/nvidia/cuda:12.6.2-devel-ubuntu24.04
+
+WORKDIR /app
+
+RUN apt-get update && \
+  apt-get install -y \
+  build-essential \
+  cmake \
+  pkg-config \
+  libssl-dev \
+  g++ \
+  curl \
+  git \
+  ca-certificates \
+  libclang-dev \
+  ninja-build && \
+  rm -rf /var/lib/apt/lists/*
+
+# Install Rust
+RUN curl https://sh.rustup.rs -sSf | sh -s -- -y
+ENV PATH="/root/.cargo/bin:${PATH}"
+
+# Install cargo-watch
+RUN cargo install cargo-watch
+
+ENV LD_LIBRARY_PATH=/usr/local/cuda/lib64:${LD_LIBRARY_PATH}
+
+EXPOSE 3000
+
+CMD ["cargo", "watch", "-x", "run --features cuda"]
