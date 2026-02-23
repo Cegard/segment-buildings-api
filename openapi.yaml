@@ -1,0 +1,668 @@
+openapi: 3.0.0
+info:
+  title: Buildings Digitalizer API
+  description: |
+    # Buildings Digitalizer API
+    
+    REST API for building image segmentation using ONNX Runtime.
+    
+    This API provides endpoints to segment building structures from images using deep learning models. 
+    The service processes incoming image data through an AI model and returns binary segmentation masks.
+    
+    ## 🎯 Use Cases
+    - Analyze satellite/aerial imagery for building detection
+    - Urban planning and development analysis
+    - Real estate mapping
+    - Infrastructure assessment
+    - City mapping projects
+    
+    ## ✨ Features
+    - Image upload via multipart form data
+    - Real-time image segmentation with AI models
+    - PNG output format for easy integration
+    - Concurrent request handling with semaphore control
+    - CUDA acceleration support for faster processing
+    - Health check endpoint for monitoring
+    - Full OpenAPI/Swagger documentation
+    
+    ## 🔄 Processing Pipeline
+    1. **Input Validation**: Image format and size verification
+    2. **Preprocessing**: RGB normalization and tensor conversion
+    3. **Inference**: ONNX model inference (with CUDA if available)
+    4. **Postprocessing**: Binary thresholding and mask generation
+    5. **Encoding**: PNG compression and return
+    
+    ## 📊 Response Formats
+    - **Success**: PNG binary image (grayscale)
+      - White (255): Building/segmented area
+      - Black (0): Background/non-segmented area
+    - **Error**: Plain text error message
+    
+    ## 🚀 Quick Start
+    ```bash
+    # Check if API is running
+    curl http://localhost:8080/health
+    
+    # Segment an image
+    curl -X POST http://localhost:8080/segment \
+      -F "image=@photo.jpg" \
+      -o segmentation.png
+    
+    # Get API specification
+    curl http://localhost:8080/api/openapi.json
+    ```
+  
+  version: 0.1.0
+  contact:
+    name: API Support
+    email: support@buildingsdigitalizer.com
+    url: https://buildingsdigitalizer.com
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+  
+servers:
+  - url: http://localhost:8080
+    description: Development server
+    variables:
+      port:
+        default: '8080'
+        description: Server port number
+  - url: https://api.buildingsdigitalizer.com
+    description: Production server
+
+paths:
+  /segment:
+    post:
+      summary: Segment buildings in an image
+      description: |
+        ## Segment Buildings in Image
+        
+        Uploads an image file and returns a binary segmentation mask identifying building structures.
+        
+        ### How It Works
+        
+        1. **Accept**: Receives an image file via multipart form data
+        2. **Preprocess**: 
+           - Decodes the image (supports PNG, JPG, BMP, TIFF, etc.)
+           - Normalizes RGB values from [0-255] to [0-1]
+           - Converts to tensor format [1, 3, height, width]
+        3. **Inference**: 
+           - Passes tensor through ONNX model
+           - Returns probability scores for each pixel
+        4. **Postprocess**:
+           - Applies threshold (0.5) to create binary mask
+           - Converts to [0, 255] grayscale values
+        5. **Encode**: Outputs as PNG image
+        
+        ### Processing Time
+        - Typical: 10-100ms per image (depending on size)
+        - With CUDA: 5-50ms per image
+        - Preprocessing: ~5ms
+        - Inference: ~50-90ms
+        - Postprocessing + encoding: ~5-10ms
+        
+        ### Image Size Recommendations
+        - **Small**: 256x256 - fastest, least detailed
+        - **Medium**: 512x512 - balanced
+        - **Large**: 1024x1024+ - most detailed, slower
+        - **Maximum**: Limited by available RAM (typically 4096x4096)
+        
+        ### Output Format
+        The result is a grayscale PNG image with the same dimensions as the input:
+        - **White pixels (255)**: Detected building areas
+        - **Black pixels (0)**: Background/non-building areas
+        - **Format**: PNG with lossless compression
+      
+      operationId: segment_image
+      tags:
+        - Image Segmentation
+      
+      parameters:
+        - name: X-Request-ID
+          in: header
+          description: Optional request tracking ID
+          required: false
+          schema:
+            type: string
+            format: uuid
+          example: "550e8400-e29b-41d4-a716-446655440000"
+      
+      requestBody:
+        required: true
+        description: |
+          Multipart form data containing the image to segment.
+          
+          ### Requirements
+          - **Content-Type**: multipart/form-data
+          - **Field Name**: image (or configured via IMAGE_FILE_NAME env var)
+          - **File Format**: PNG, JPG, BMP, TIFF, WebP, or any format supported by the image crate
+          - **Max Size**: Limited by available memory (recommended < 100MB)
+          - **Dimensions**: At least 1x1 pixels, recommended 256-2048 pixels
+        
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required:
+                - image
+              properties:
+                image:
+                  type: string
+                  format: binary
+                  description: |
+                    The image file to segment. 
+                    
+                    **Supported Formats:**
+                    - JPEG/JPG - Lossy compression, widely supported
+                    - PNG - Lossless compression, recommended
+                    - BMP - Uncompressed, simple format
+                    - TIFF - Professional photography format
+                    - WebP - Modern compression format
+                    
+                    **Recommendations:**
+                    - Use PNG or JPG for best compatibility
+                    - Keep image size between 256x256 and 2048x2048 for optimal performance
+                    - Ensure image contains clear building structures for best results
+            
+            examples:
+              jpeg_example:
+                summary: JPEG image upload
+                description: Upload a JPEG file for segmentation
+                value:
+                  image: "building_photo.jpg"
+              png_example:
+                summary: PNG image upload
+                description: Upload a PNG file for segmentation
+                value:
+                  image: "satellite_image.png"
+      
+      responses:
+        '200':
+          description: |
+            ## Successful Segmentation (200 OK)
+            
+            The request was processed successfully and returns a binary segmentation mask as a PNG image.
+            
+            ### Response Details
+            - **Content-Type**: image/png
+            - **Content-Disposition**: attachment; filename="segmentation.png"
+            - **Body**: Binary PNG image data
+            - **Dimensions**: Same as input image
+            - **Format**: Grayscale (8-bit per pixel)
+            
+            ### Output Interpretation
+            - **White pixels (255)**: Areas identified as buildings
+            - **Black pixels (0)**: Background/non-building areas
+            - **No gradients**: Pure binary output (only 0 or 255)
+            
+            ### Use Cases
+            - Process for further analysis
+            - Overlay on original image
+            - Extract building statistics
+            - Feed into downstream ML models
+            - Export for GIS systems
+          
+          headers:
+            Content-Type:
+              schema:
+                type: string
+                enum: [image/png]
+              description: "Response content type: image/png"
+            Content-Disposition:
+              schema:
+                type: string
+                example: "attachment; filename=\"segmentation.png\""
+              description: File download information for browsers
+            X-Processing-Time:
+              schema:
+                type: integer
+                format: int64
+              description: "Processing time in milliseconds (optional)"
+              example: 45
+          
+          content:
+            image/png:
+              schema:
+                type: string
+                format: binary
+              example: "[Binary PNG data - grayscale image with white buildings on black background]"
+        
+        '400':
+          description: |
+            ## Bad Request (400)
+            
+            The request is invalid. Common causes:
+            
+            ### Missing Image Field
+            ```
+            Missing image field
+            ```
+            **Cause**: The multipart form data doesn't include an 'image' field
+            **Solution**: Ensure the form field name matches IMAGE_FILE_NAME environment variable (default: "image")
+            
+            **cURL Example - Correct:**
+            ```bash
+            curl -X POST http://localhost:8080/segment -F "image=@photo.jpg"
+            ```
+            
+            **cURL Example - Wrong field name:**
+            ```bash
+            # This will fail:
+            curl -X POST http://localhost:8080/segment -F "file=@photo.jpg"
+            ```
+            
+            ### Invalid Multipart Form Data
+            ```
+            Invalid multipart form data
+            ```
+            **Cause**: Malformed multipart request
+            **Solution**: Ensure proper Content-Type header and boundary formatting
+            
+            ### Failed to Read Image Bytes
+            ```
+            Failed to read image bytes
+            ```
+            **Cause**: Cannot read the uploaded file
+            **Solution**: Ensure the file exists and is readable
+            
+            ### Unsupported Image Format
+            ```
+            Segmentation failed: [image parsing error]
+            ```
+            **Cause**: File format not supported
+            **Solution**: Use PNG, JPG, BMP, TIFF, or WebP format
+          
+          content:
+            text/plain:
+              schema:
+                type: string
+              examples:
+                missing_field:
+                  value: "Missing image field"
+                  summary: Image field not in form data
+                invalid_multipart:
+                  value: "Invalid multipart form data"
+                  summary: Malformed multipart request
+                read_error:
+                  value: "Failed to read image bytes"
+                  summary: Cannot read uploaded file
+                format_error:
+                  value: "Segmentation failed: unsupported image format"
+                  summary: Image format not supported
+        
+        '500':
+          description: |
+            ## Internal Server Error (500)
+            
+            The server encountered an error during processing. Common causes:
+            
+            ### Model Inference Failed
+            ```
+            Segmentation failed: model inference error
+            ```
+            **Cause**: 
+            - ONNX model not loaded
+            - Insufficient GPU memory (if using CUDA)
+            - Model incompatibility
+            
+            **Solution**:
+            - Verify MODEL_PATH environment variable
+            - Check model file exists and is valid
+            - Ensure sufficient GPU memory available
+            - Restart the server
+            
+            ### Image Preprocessing Failed
+            ```
+            Segmentation failed: image preprocessing error
+            ```
+            **Cause**: 
+            - Invalid image dimensions
+            - Out of memory
+            - Corrupted image data
+            
+            **Solution**:
+            - Try with a smaller image
+            - Check image file integrity
+            - Ensure sufficient system memory
+            
+            ### PNG Conversion Failed
+            ```
+            Failed to convert segmentation result to PNG: [error details]
+            ```
+            **Cause**:
+            - Insufficient disk space
+            - Memory allocation error
+            - Invalid mask data
+            
+            **Solution**:
+            - Check available disk space
+            - Ensure sufficient RAM
+            - Contact support with error details
+          
+          content:
+            text/plain:
+              schema:
+                type: string
+              examples:
+                inference_error:
+                  value: "Segmentation failed: model inference error"
+                  summary: Model inference failed
+                preprocessing_error:
+                  value: "Segmentation failed: image preprocessing error"
+                  summary: Preprocessing failed
+                conversion_error:
+                  value: "Failed to convert segmentation result to PNG: out of memory"
+                  summary: PNG conversion failed
+
+  /health:
+    get:
+      summary: Health check endpoint
+      description: |
+        ## Health Check
+        
+        Returns the health status of the API server. Use this endpoint to:
+        - Verify the server is running and responsive
+        - Monitor service availability
+        - Implement health checks in load balancers
+        - Check server readiness in container orchestration
+        
+        ### Usage
+        
+        **Simple health check:**
+        ```bash
+        curl http://localhost:8080/health
+        ```
+        
+        **With response time tracking:**
+        ```bash
+        curl -w "Response time: %{time_total}s\n" http://localhost:8080/health
+        ```
+        
+        **In a monitoring script:**
+        ```bash
+        STATUS=$(curl -s http://localhost:8080/health | jq -r '.status')
+        if [ "$STATUS" = "ok" ]; then
+          echo "API is healthy"
+        else
+          echo "API is unhealthy"
+          exit 1
+        fi
+        ```
+        
+        ### Response Codes
+        - **200 OK**: Server is healthy and ready to serve requests
+        - **Connection refused**: Server is not running
+        - **Timeout**: Server is not responding
+        
+        ### Integration Examples
+        
+        **Docker health check:**
+        ```dockerfile
+        HEALTHCHECK --interval=30s --timeout=10s --start-period=5s \
+          CMD curl -f http://localhost:8080/health || exit 1
+        ```
+        
+        **Kubernetes readiness probe:**
+        ```yaml
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 8080
+          initialDelaySeconds: 5
+          periodSeconds: 10
+        ```
+        
+        **Kubernetes liveness probe:**
+        ```yaml
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8080
+          initialDelaySeconds: 15
+          periodSeconds: 20
+        ```
+      
+      operationId: health_check
+      tags:
+        - Health & Status
+      
+      responses:
+        '200':
+          description: |
+            Server is healthy and ready.
+            
+            The response includes the server status. Use the 'status' field 
+            to determine if the server is operational.
+          
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    enum: ["ok"]
+                    description: Always returns "ok" when server is healthy
+                    example: "ok"
+              examples:
+                healthy:
+                  value:
+                    status: "ok"
+                  summary: Server is healthy and ready for requests
+
+  /api/openapi.json:
+    get:
+      summary: Get OpenAPI specification
+      description: |
+        ## OpenAPI Specification
+        
+        Returns the complete OpenAPI 3.0 specification of the API in JSON format.
+        
+        ### Use Cases
+        - Import into API clients (Postman, Insomnia, etc.)
+        - Generate client SDKs
+        - Display in Swagger UI or ReDoc
+        - API documentation generation
+        - Integration with API management platforms
+        
+        ### Consuming the Specification
+        
+        **View in browser with Swagger UI:**
+        ```
+        https://editor.swagger.io/?url=http://localhost:8080/api/openapi.json
+        ```
+        
+        **Import into Postman:**
+        1. Open Postman
+        2. File → Import
+        3. Paste URL: http://localhost:8080/api/openapi.json
+        4. Click Import
+        
+        **Generate TypeScript client:**
+        ```bash
+        npx openapi-generator-cli generate \
+          -i http://localhost:8080/api/openapi.json \
+          -g typescript-fetch \
+          -o ./generated-client
+        ```
+        
+        **Generate Python client:**
+        ```bash
+        openapi-generator-cli generate \
+          -i http://localhost:8080/api/openapi.json \
+          -g python \
+          -o ./python_client
+        ```
+        
+        **Generate Go client:**
+        ```bash
+        openapi-generator-cli generate \
+          -i http://localhost:8080/api/openapi.json \
+          -g go \
+          -o ./go-client
+        ```
+      
+      operationId: get_openapi_spec
+      tags:
+        - API Documentation
+      
+      responses:
+        '200':
+          description: |
+            OpenAPI 3.0 specification in JSON format.
+            
+            The response contains the complete API specification including:
+            - Endpoint definitions and methods
+            - Request/response schemas
+            - Parameter documentation
+            - Error descriptions
+            - Authentication requirements (if any)
+          
+          content:
+            application/json:
+              schema:
+                type: object
+                description: OpenAPI 3.0 specification object
+              examples:
+                spec_example:
+                  value:
+                    openapi: "3.0.0"
+                    info:
+                      title: "Buildings Digitalizer API"
+                      version: "0.1.0"
+                    paths:
+                      /segment:
+                        post:
+                          summary: "Segment buildings in an image"
+                      /health:
+                        get:
+                          summary: "Health check endpoint"
+
+components:
+  schemas:
+    ImageInput:
+      type: object
+      description: |
+        Image input for segmentation.
+        
+        This represents the input to the segmentation process.
+      properties:
+        image_bytes:
+          type: string
+          format: binary
+          description: Raw image bytes in any supported format
+    
+    SegmentationResult:
+      type: object
+      description: |
+        Result of image segmentation.
+        
+        Contains the binary mask and image dimensions.
+        The mask is a flat array of bytes where each byte represents 
+        a pixel (0=background, 255=building).
+      required:
+        - mask
+        - dimensions
+      properties:
+        mask:
+          type: array
+          items:
+            type: integer
+            minimum: 0
+            maximum: 255
+            format: uint8
+          description: |
+            Binary segmentation mask as a flat array of bytes.
+            
+            Array organization:
+            - Length: width × height pixels
+            - Order: Row-major (left-to-right, top-to-bottom)
+            - Values: 0 (background) or 255 (building)
+            
+            Example for 2x2 image:
+            [255, 0, 0, 255] represents:
+            ```
+            [Building] [Background]
+            [Background] [Building]
+            ```
+          example: [255, 255, 0, 0, 255, 255, 0, 0]
+        
+        dimensions:
+          $ref: '#/components/schemas/Dimensions'
+          description: Dimensions of the image and mask
+    
+    Dimensions:
+      type: object
+      description: |
+        Image or mask dimensions.
+        
+        Specifies the width and height in pixels.
+      required:
+        - width
+        - height
+      properties:
+        width:
+          type: integer
+          minimum: 1
+          maximum: 10000
+          description: |
+            Width in pixels.
+            
+            Represents the number of pixels from left to right.
+            Typical range: 1 to 4096
+          example: 640
+        
+        height:
+          type: integer
+          minimum: 1
+          maximum: 10000
+          description: |
+            Height in pixels.
+            
+            Represents the number of pixels from top to bottom.
+            Typical range: 1 to 4096
+          example: 480
+    
+    ErrorResponse:
+      type: object
+      description: Error response from the API
+      required:
+        - error
+      properties:
+        error:
+          type: string
+          description: |
+            Descriptive error message.
+            
+            Provides details about what went wrong and may include
+            suggestions for resolution.
+          example: "Segmentation failed: model inference error"
+
+tags:
+  - name: Image Segmentation
+    description: |
+      Image segmentation operations.
+      
+      Upload images and receive binary segmentation masks identifying building structures.
+  
+  - name: Health & Status
+    description: |
+      Server health and status monitoring.
+      
+      Use these endpoints to monitor server availability and readiness.
+  
+  - name: API Documentation
+    description: |
+      API documentation and specification endpoints.
+      
+      Access machine-readable API documentation for integration with tools and clients.
+
+x-internal: false
+x-logo:
+  url: https://buildingsdigitalizer.com/logo.png
+  altText: Buildings Digitalizer Logo
+
+# Security schemes (if authentication is added in future)
+components:
+  securitySchemes: {}

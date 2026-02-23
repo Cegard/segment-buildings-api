@@ -1,12 +1,13 @@
 use serde::Serialize;
+use utoipa::ToSchema;
 
-#[derive(Serialize)]
+#[derive(Serialize, ToSchema)]
 pub struct Dimensions {
     pub width: usize,
     pub height: usize,
 }
 
-#[derive(Serialize)]
+#[derive(Serialize, ToSchema)]
 pub struct SegmentationResult {
     pub mask: Vec<u8>,
     pub dimensions: Dimensions,

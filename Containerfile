@@ -27,7 +27,10 @@ ENV PATH="/root/.cargo/bin:${PATH}"
 # Copy project files
 COPY . .
 
-# Optional: enable CUDA feature in ort crate
+# Run tests to ensure code quality
+RUN cargo test --release --features cuda
+
+# Build the release binary with CUDA support
 RUN cargo build --release --features cuda
 
 # ================================
