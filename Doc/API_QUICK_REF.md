@@ -150,12 +150,12 @@ document.getElementById('result').src = url;
 
 ```bash
 # Server configuration
-ON_ADDRESS=0.0.0.0        # Bind address
-PORT=8080                 # Server port
+ON_ADDRESS=0.0.0.0              # Bind address
+SERVING_PORT=8080               # Server port
 MODEL_PATH=/path/to/model.onnx  # ONNX model
-ON_CUDA=false             # CUDA acceleration
-MAX_CON_CALLS=1           # Max concurrent requests
-IMAGE_FILE_NAME=image     # Form field name
+ON_CUDA=false                   # CUDA acceleration
+MAX_CON_CALLS=1                 # Max concurrent requests
+IMAGE_FILE_NAME=image           # Form field name
 ```
 
 ---

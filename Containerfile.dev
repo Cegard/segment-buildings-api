@@ -24,7 +24,9 @@ ENV PATH="/root/.cargo/bin:${PATH}"
 RUN /root/.cargo/bin/cargo install cargo-watch
 
 ENV LD_LIBRARY_PATH=/usr/local/cuda/lib64:${LD_LIBRARY_PATH}
+ENV SERVING_PORT=8080
 
-EXPOSE 3000
+# Expose port given in the .env file
+EXPOSE ${SERVING_PORT}
 
 CMD ["/root/.cargo/bin/cargo", "watch", "-x", "run --features cuda"]

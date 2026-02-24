@@ -57,9 +57,10 @@ COPY model ./model
 
 ENV RUST_LOG=info
 ENV LD_LIBRARY_PATH=/usr/local/cuda/lib64:${LD_LIBRARY_PATH}
+ENV SERVING_PORT=8080
 
-# Expose port
-EXPOSE 3000
+# Expose port given in the .env file
+EXPOSE ${SERVING_PORT}
 
 # Run the binary
 CMD ["app"]

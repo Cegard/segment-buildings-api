@@ -281,7 +281,7 @@ The API is configured via environment variables:
 | Variable | Type | Default | Description |
 |----------|------|---------|-------------|
 | `ON_ADDRESS` | string | 0.0.0.0 | Server bind address |
-| `PORT` | number | 8080 | Server port |
+| `SERVING_PORT` | number | 8080 | Server port |
 | `MODEL_PATH` | string | - | Path to ONNX model file |
 | `ON_CUDA` | boolean | false | Enable CUDA acceleration |
 | `MAX_CON_CALLS` | number | 1 | Max concurrent inferences |

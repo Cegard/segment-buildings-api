@@ -152,7 +152,7 @@
 ### Environment Configuration
 All required environment variables documented:
 - `ON_ADDRESS` - Server bind address
-- `PORT` - Server port
+- `SERVING_PORT` - Server port
 - `MODEL_PATH` - ONNX model file path
 - `ON_CUDA` - CUDA acceleration toggle
 - `MAX_CON_CALLS` - Concurrent request limit

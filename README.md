@@ -245,12 +245,12 @@ Infrastructure Layer (src/infrastructure/)
 Required environment variables:
 
 ```bash
-ON_ADDRESS=0.0.0.0        # Server bind address
-PORT=8080                 # Server port (required)
-MODEL_PATH=/path/model    # Path to ONNX model (required)
-ON_CUDA=false             # Enable CUDA (optional)
-MAX_CON_CALLS=1           # Concurrent requests (optional)
-IMAGE_FILE_NAME=image     # Form field name (optional)
+ON_ADDRESS=0.0.0.0      # Server bind address
+SERVING_PORT=8080       # Server port (required)
+MODEL_PATH=/path/model  # Path to ONNX model (required)
+ON_CUDA=false           # Enable CUDA (optional)
+MAX_CON_CALLS=1         # Concurrent requests (optional)
+IMAGE_FILE_NAME=image   # Form field name (optional)
 ```
 
 ---
@@ -291,6 +291,11 @@ cargo test -- --nocapture
 ### Segment an Image
 
 **cURL:**
+```bash
+curl -X POST http://localhost:8080/segment -F "image=@<image_file_name>.png" --output mask.png
+```
+
+**Alternative format:**
 ```bash
 curl -X POST http://localhost:8080/segment \
   -F "image=@building.jpg" \
@@ -361,11 +366,16 @@ openapi-generator-cli generate -i openapi.yaml -g go
 
 The `Containerfile.dev` image includes hot reloading capabilities for development:
 
+Build and run the development image
 ```bash
+# Build the development image
+podman build -f Containerfile.dev -t buildings_digitizer:dev .
+
+# Run the development image
 podman run --rm -it \
   --env-file .env \
   --device nvidia.com/gpu=all \
-  -p 3000:3000 \
+  -p 8080:8080 \
   -v "$PWD:/app" \
   -v cargo-cache:/root/.cargo \
   -v target-cache:/app/target \
@@ -375,7 +385,7 @@ podman run --rm -it \
 **Features:**
 - Hot reloading for code changes
 - GPU support via NVIDIA
-- Port 3000 mapped to container
+- Port 8080 mapped to container
 - Cached Cargo and build artifacts for faster rebuilds
 - Environment variables loaded from `.env` file
 
@@ -390,14 +400,15 @@ podman build -t buildings_digitizer:cuda .
 # Run the production image
 podman run --rm -it \
   --device nvidia.com/gpu=all \
-  -p 3000:3000 \
+  --env-file .env \
+  -p 8080:8080 \
   buildings_digitizer:cuda
 ```
 
 **Features:**
 - Optimized production build
 - CUDA-enabled for GPU acceleration
-- Port 3000 exposed for API access
+- Port 8080 exposed for API access
 
 ### Docker
 
@@ -435,7 +446,7 @@ lsof -i :8080
 
 # Check environment variables
 env | grep ON_ADDRESS
-env | grep PORT
+env | grep SERVING_PORT
 env | grep MODEL_PATH
 ```
 
