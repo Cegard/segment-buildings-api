@@ -410,30 +410,6 @@ podman run --rm -it \
 - CUDA-enabled for GPU acceleration
 - Port 8080 exposed for API access
 
-### Docker
-
-```bash
-docker build -t buildings-digitalizer .
-docker run -p 8080:8080 \
-  -e MODEL_PATH=/app/model.onnx \
-  buildings-digitalizer
-```
-
-### Kubernetes
-
-```yaml
-apiVersion: v1
-kind: Service
-metadata:
-  name: buildings-api
-spec:
-  ports:
-  - port: 8080
-    targetPort: 8080
-  selector:
-    app: buildings-digitalizer
-```
-
 ---
 
 ##  Troubleshooting
