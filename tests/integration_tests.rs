@@ -58,11 +58,6 @@ fn create_multipart_body(image_bytes: Vec<u8>, field_name: &str) -> (Body, Strin
 
 #[tokio::test]
 async fn test_segment_endpoint_success() {
-    // Set up environment variable for image field name
-    unsafe {
-        std::env::set_var("IMAGE_FILE_NAME", "image");
-    }
-
     // Create mock output
     let mock_output = Array4::<f32>::ones((1, 1, 10, 10));
     let mock_inferer = Arc::new(MockInferer {
@@ -70,7 +65,10 @@ async fn test_segment_endpoint_success() {
     });
 
     let use_case = Arc::new(SegmentImage::new(mock_inferer));
-    let state = AppState { use_case };
+    let state = AppState {
+        use_case,
+        image_field: "image".to_string(),
+    };
 
     let app = Router::new()
         .route("/segment", axum::routing::post(segment_handler))
@@ -107,17 +105,16 @@ async fn test_segment_endpoint_success() {
 
 #[tokio::test]
 async fn test_segment_endpoint_missing_image_field() {
-    unsafe {
-        std::env::set_var("IMAGE_FILE_NAME", "image");
-    }
-
     let mock_output = Array4::<f32>::ones((1, 1, 10, 10));
     let mock_inferer = Arc::new(MockInferer {
         return_value: mock_output,
     });
 
     let use_case = Arc::new(SegmentImage::new(mock_inferer));
-    let state = AppState { use_case };
+    let state = AppState {
+        use_case,
+        image_field: "image".to_string(),
+    };
 
     let app = Router::new()
         .route("/segment", axum::routing::post(segment_handler))
@@ -141,17 +138,16 @@ async fn test_segment_endpoint_missing_image_field() {
 
 #[tokio::test]
 async fn test_segment_endpoint_invalid_image_data() {
-    unsafe {
-        std::env::set_var("IMAGE_FILE_NAME", "image");
-    }
-
     let mock_output = Array4::<f32>::ones((1, 1, 10, 10));
     let mock_inferer = Arc::new(MockInferer {
         return_value: mock_output,
     });
 
     let use_case = Arc::new(SegmentImage::new(mock_inferer));
-    let state = AppState { use_case };
+    let state = AppState {
+        use_case,
+        image_field: "image".to_string(),
+    };
 
     let app = Router::new()
         .route("/segment", axum::routing::post(segment_handler))
@@ -182,15 +178,33 @@ impl Inferer for ErrorInferer {
     }
 }
 
+struct DimensionCheckingInferer;
+
+#[async_trait]
+impl Inferer for DimensionCheckingInferer {
+    async fn infer(&self, input: Array4<f32>) -> Result<Array4<f32>> {
+        let shape = input.shape();
+        let height = shape[2];
+        let width = shape[3];
+
+        if height != 320 || width != 320 {
+            return Err(anyhow::anyhow!(
+                "Got invalid dimensions: expected 320x320"
+            ));
+        }
+
+        Ok(Array4::<f32>::ones((1, 1, 320, 320)))
+    }
+}
+
 #[tokio::test]
 async fn test_segment_endpoint_inference_error() {
-    unsafe {
-        std::env::set_var("IMAGE_FILE_NAME", "image");
-    }
-
     let error_inferer = Arc::new(ErrorInferer);
     let use_case = Arc::new(SegmentImage::new(error_inferer));
-    let state = AppState { use_case };
+    let state = AppState {
+        use_case,
+        image_field: "image".to_string(),
+    };
 
     let app = Router::new()
         .route("/segment", axum::routing::post(segment_handler))
@@ -211,6 +225,34 @@ async fn test_segment_endpoint_inference_error() {
     assert_eq!(response.status(), StatusCode::INTERNAL_SERVER_ERROR);
 }
 
+#[tokio::test]
+async fn test_segment_endpoint_invalid_dimensions_returns_400() {
+    let inferer = Arc::new(DimensionCheckingInferer);
+    let use_case = Arc::new(SegmentImage::new(inferer));
+    let state = AppState {
+        use_case,
+        image_field: "image".to_string(),
+    };
+
+    let app = Router::new()
+        .route("/segment", axum::routing::post(segment_handler))
+        .with_state(state);
+
+    let image_bytes = create_test_image(10, 10);
+    let (body, content_type) = create_multipart_body(image_bytes, "image");
+
+    let request = axum::http::Request::builder()
+        .uri("/segment")
+        .method("POST")
+        .header("Content-Type", content_type)
+        .body(body)
+        .unwrap();
+
+    let response = app.oneshot(request).await.unwrap();
+
+    assert_eq!(response.status(), StatusCode::BAD_REQUEST);
+}
+
 // Note: Testing missing environment variables in integration tests is challenging
 // due to parallel test execution. This test is commented out but the functionality
 // is indirectly tested through the handler's error path.
@@ -221,10 +263,6 @@ async fn test_segment_endpoint_inference_error() {
 
 #[tokio::test]
 async fn test_segment_endpoint_with_different_image_sizes() {
-    unsafe {
-        std::env::set_var("IMAGE_FILE_NAME", "image");
-    }
-
     let test_sizes = vec![(5, 5), (20, 20), (50, 30), (100, 100)];
 
     for (width, height) in test_sizes {
@@ -234,7 +272,10 @@ async fn test_segment_endpoint_with_different_image_sizes() {
         });
 
         let use_case = Arc::new(SegmentImage::new(mock_inferer));
-        let state = AppState { use_case };
+        let state = AppState {
+            use_case,
+            image_field: "image".to_string(),
+        };
 
         let app = Router::new()
             .route("/segment", axum::routing::post(segment_handler))

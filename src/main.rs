@@ -122,10 +122,14 @@ async fn main() -> anyhow::Result<()> {
     let port = env::var(constants::ENV_PORT)?.parse::<usize>()?;
     let will_run_on_cuda = env::var(constants::ENV_ON_CUDA)?.parse::<bool>()?;
     let max_con_calls = env::var(constants::ENV_MAX_CON_CALLS)?.parse::<usize>()?;
+    let image_field = env::var(constants::ENV_IMAGE_FILE_NAME)?;
 
     let inferer = Arc::new(OrtSegmenter::new(will_run_on_cuda, Some(max_con_calls))?);
     let use_case = Arc::new(SegmentImage::new(inferer));
-    let state = AppState { use_case };
+    let state = AppState {
+        use_case,
+        image_field,
+    };
 
     // Create router with segmentation and health endpoints
     let app = Router::new()

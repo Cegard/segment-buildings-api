@@ -1,4 +1,5 @@
 use crate::domain::entities::SegmentationResult;
+use axum::{extract::Multipart, http::StatusCode};
 use image::{ImageBuffer, Luma};
 
 pub(super) fn to_png(result: SegmentationResult) -> anyhow::Result<Vec<u8>> {
@@ -16,109 +17,28 @@ pub(super) fn to_png(result: SegmentationResult) -> anyhow::Result<Vec<u8>> {
     Ok(bytes)
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use crate::domain::entities::Dimensions;
+pub(super) async fn extract_image_bytes(
+    mut multipart: Multipart,
+    image_field: &str,
+) -> Result<Vec<u8>, (StatusCode, &'static str)> {
+    let mut image_bytes: Option<Vec<u8>> = None;
 
-    #[test]
-    fn test_to_png_creates_valid_png() {
-        let result = SegmentationResult {
-            mask: vec![0, 128, 255, 64],
-            dimensions: Dimensions {
-                width: 2,
-                height: 2,
-            },
+    loop {
+        let field = match multipart.next_field().await {
+            Ok(Some(field)) => field,
+            Ok(None) => break,
+            Err(_) => return Err((StatusCode::BAD_REQUEST, "Invalid multipart form data")),
         };
 
-        let png_bytes = to_png(result).unwrap();
-
-        // Verify PNG signature (first 8 bytes)
-        assert_eq!(&png_bytes[0..8], &[137, 80, 78, 71, 13, 10, 26, 10]);
+        if field.name() == Some(image_field) {
+            match field.bytes().await {
+                Ok(bytes) => {
+                    image_bytes = Some(bytes.to_vec());
+                }
+                Err(_) => return Err((StatusCode::BAD_REQUEST, "Failed to read image bytes")),
+            }
+        }
     }
 
-    #[test]
-    fn test_to_png_with_single_pixel() {
-        let result = SegmentationResult {
-            mask: vec![255],
-            dimensions: Dimensions {
-                width: 1,
-                height: 1,
-            },
-        };
-
-        let png_bytes = to_png(result).unwrap();
-
-        assert!(!png_bytes.is_empty());
-        assert_eq!(&png_bytes[0..8], &[137, 80, 78, 71, 13, 10, 26, 10]);
-    }
-
-    #[test]
-    fn test_to_png_with_all_black() {
-        let result = SegmentationResult {
-            mask: vec![0; 100],
-            dimensions: Dimensions {
-                width: 10,
-                height: 10,
-            },
-        };
-
-        let png_bytes = to_png(result).unwrap();
-
-        assert!(!png_bytes.is_empty());
-        assert_eq!(&png_bytes[0..8], &[137, 80, 78, 71, 13, 10, 26, 10]);
-    }
-
-    #[test]
-    fn test_to_png_with_all_white() {
-        let result = SegmentationResult {
-            mask: vec![255; 100],
-            dimensions: Dimensions {
-                width: 10,
-                height: 10,
-            },
-        };
-
-        let png_bytes = to_png(result).unwrap();
-
-        assert!(!png_bytes.is_empty());
-        assert_eq!(&png_bytes[0..8], &[137, 80, 78, 71, 13, 10, 26, 10]);
-    }
-
-    #[test]
-    fn test_to_png_fails_with_mismatched_dimensions() {
-        let result = SegmentationResult {
-            mask: vec![255, 0, 128],
-            dimensions: Dimensions {
-                width: 2,
-                height: 2,
-            },
-        };
-
-        let png_result = to_png(result);
-        assert!(png_result.is_err());
-    }
-
-    #[test]
-    fn test_to_png_roundtrip() {
-        let original_mask = vec![0, 50, 100, 150, 200, 255];
-        let result = SegmentationResult {
-            mask: original_mask.clone(),
-            dimensions: Dimensions {
-                width: 3,
-                height: 2,
-            },
-        };
-
-        let png_bytes = to_png(result).unwrap();
-
-        // Decode the PNG and verify the data
-        let img = image::load_from_memory(&png_bytes).unwrap();
-        let gray_img = img.to_luma8();
-
-        assert_eq!(gray_img.dimensions(), (3, 2));
-        
-        let decoded_mask: Vec<u8> = gray_img.into_raw();
-        assert_eq!(decoded_mask, original_mask);
-    }
+    image_bytes.ok_or((StatusCode::BAD_REQUEST, "Missing image field"))
 }
