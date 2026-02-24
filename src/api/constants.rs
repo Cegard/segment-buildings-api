@@ -1,0 +1,1 @@
+pub(super) const DIMENSIONS_ERROR_MSG: &str = "Got invalid dimensions";

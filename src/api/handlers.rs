@@ -9,6 +9,7 @@ use serde::{Deserialize, Serialize};
 use std::env;
 use std::sync::Arc;
 use utoipa::ToSchema;
+use super::constants as super_constants;
 
 #[derive(Clone)]
 pub struct AppState {
@@ -202,11 +203,13 @@ pub async fn segment_handler(
     let result = match state.use_case.execute(image_input).await {
         Ok(result) => result,
         Err(e) => {
-            return (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                format!("Segmentation failed: {e}"),
-            )
-                .into_response();
+            let error_msg = format!("{e}");
+            let status_code = if error_msg.starts_with(super_constants::DIMENSIONS_ERROR_MSG) {
+                StatusCode::BAD_REQUEST
+            } else {
+                StatusCode::INTERNAL_SERVER_ERROR
+            };
+            return (status_code, format!("Segmentation failed: {e}")).into_response();
         }
     };
 
