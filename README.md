@@ -2,7 +2,7 @@
 
 ## Overview
 
-This is a REST API for segmentation buildings from satelital images using ONNX Runtime.
+This is a REST API that allows the users of it to segment buildings from satellite images using a custom trained model via the ONNX Runtime.
 
 ## 📚 Documentation Files
 
